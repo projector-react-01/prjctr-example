@@ -1,28 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { combineLatest, map, Observable, Subject } from 'rxjs';
+import React, { useEffect, useState } from "react";
+import { combineLatest, map, Observable, Subject } from "rxjs";
+import { useDiContainer } from "./di/DiContext";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type ComposeFunctionOutput<VP extends {}, K extends keyof VP = keyof VP> = {
-    readonly props: Record<
-        string,
-        VP[K] | readonly [observable: Observable<VP[K]>, defaultValue: VP[K]]
-    >;
+export type ComposeFunctionOutput<VP extends {}> = {
+    readonly props: {
+        [K in keyof VP]: VP[K] | readonly [observable: Observable<VP[K]>, defaultValue: VP[K]];
+    };
     readonly effects: readonly Observable<unknown>[];
 };
 
 export type ComposeFunction<P extends {}, VP extends {}> = (
-    // eslint-disable-next-line no-unused-vars
     props$: Observable<P>
 ) => ComposeFunctionOutput<VP>;
 
 export function connect<P extends {}, VP extends {}>(
     view: React.FC<VP>,
-    composeFunction: ComposeFunction<P, VP>
+    controllerName: string
 ): React.FC<P> {
     return props => {
         const [props$] = useState(() => new Subject<P>());
+        const container = useDiContainer();
 
-        const [out] = useState(() => composeFunction(props$));
+        const [composeController] = useState(
+            () => container.resolve(controllerName) as ComposeFunction<P, VP>
+        );
+
+        const [out] = useState(() => composeController(props$));
         const [viewProps, setViewProps] = useState<VP>(
             Object.keys(out.props).reduce((vp, key) => {
                 const value = out.props[key];

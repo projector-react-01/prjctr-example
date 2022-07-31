@@ -1,4 +1,5 @@
 import { connectable, map, merge, Observable, scan, Subject, switchMap } from "rxjs";
+import { assertNever } from "../ts-utils";
 
 export type AuthState =
     | {
@@ -44,10 +45,6 @@ const initialState: AuthState = {
     isLoggedIn: false,
     isLogging: false
 };
-
-function assertNever(x: never): never {
-    throw new Error(`Invalid value. Should be never got ${x}`);
-}
 
 type ApiService = {
     readonly login: (username: string, password: string) => Promise<void>;

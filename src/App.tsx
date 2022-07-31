@@ -1,22 +1,16 @@
-import React, { createContext, useState } from "react";
-import { createContainer } from "awilix";
+import React, { useState } from "react";
 
 import { registerDependencies } from "./composition-root";
-
-const container = createContainer({
-    injectionMode: "CLASSIC"
-});
+import { container } from "./di/container";
+import { Router } from "./routing/Router";
+import { DiContext } from "./di/DiContext";
+import { MountEffects } from "./effects/MountEffects";
 
 registerDependencies(container);
 
-const ContainerContext = createContext(container);
-
-export const App: React.FC = () => {
-    const [name, setName] = useState("worlddd");
-    return (
-        <ContainerContext.Provider value={container}>
-            <input value={name} onChange={e => setName(e.target.value)} />
-            <h1>Hello, {name}!</h1>
-        </ContainerContext.Provider>
-    );
-};
+export const App: React.FC = () => (
+    <DiContext.Provider value={container}>
+        <MountEffects />
+        <Router />
+    </DiContext.Provider>
+);
