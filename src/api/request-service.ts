@@ -16,7 +16,8 @@ export function createRequestService(): RequestService {
                 data: payload,
                 baseURL: "http://localhost:8000",
                 responseType: "json",
-                url: endpoint
+                url: endpoint,
+                withCredentials: true
             })
     };
 }
