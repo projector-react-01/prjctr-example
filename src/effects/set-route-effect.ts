@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import { Observable, takeUntil } from "rxjs";
 import { createEffect } from "./types";
 import { Route } from "../routing/types";
 
@@ -11,7 +11,10 @@ function locationToRoute(location: string): Route {
     }
 }
 
-export function createSetRouteEffect(navigateTo: (route: Route) => void) {
+export function createSetRouteEffect(
+    navigateTo: (route: Route) => void,
+    dispose$: Observable<void>
+) {
     return createEffect(() => {
         function handler() {
             const initValue = window.location.pathname;
@@ -26,6 +29,6 @@ export function createSetRouteEffect(navigateTo: (route: Route) => void) {
             window.addEventListener("popstate", handler);
 
             return () => window.removeEventListener("popstate", handler);
-        });
+        }).pipe(takeUntil(dispose$));
     });
 }

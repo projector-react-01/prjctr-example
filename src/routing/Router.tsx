@@ -1,4 +1,4 @@
-import { Observable, tap } from "rxjs";
+import { Observable } from "rxjs";
 import { ComposeFunction, connect } from "../connect";
 import { RouterView, ViewProps } from "./RouterView";
 import { Route } from "./types";
@@ -6,7 +6,7 @@ import { Route } from "./types";
 export function createRouterStreams(route$: Observable<Route>): ComposeFunction<{}, ViewProps> {
     return () => ({
         props: {
-            route: [route$.pipe(tap(route => console.log("route:", route))), undefined]
+            route: [route$, undefined]
         },
         effects: []
     });

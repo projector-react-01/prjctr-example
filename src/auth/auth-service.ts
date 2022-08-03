@@ -1,5 +1,6 @@
-import { connectable, map, merge, Observable, scan, Subject, switchMap } from "rxjs";
+import { map, merge, Observable, scan, Subject, switchMap } from "rxjs";
 import { assertNever } from "../ts-utils";
+import { connectAndReplay } from "../rxjs/connectAndReplay";
 
 export type AuthState =
     | {
@@ -51,7 +52,7 @@ type ApiService = {
     readonly logout: () => Promise<void>;
 };
 
-export function createAuthService(apiService: ApiService): AuthService {
+export function createAuthService(apiService: ApiService, dispose$: Observable<void>): AuthService {
     const onLogin$ = new Subject<readonly [username: string, password: string]>();
     const onLogout$ = new Subject<void>();
 
@@ -61,34 +62,31 @@ export function createAuthService(apiService: ApiService): AuthService {
         )
     );
 
-    const state$ = connectable(
-        merge(
-            onLogin$.pipe(map(() => Actions.login())),
-            onLogout$.pipe(map(() => Actions.logout())),
-            loginResult$.pipe(map(Actions.loggedIn))
-        ).pipe(
-            scan((_: AuthState, event): AuthState => {
-                switch (event.type) {
-                    case ActionType.Login:
-                        return {
-                            isLoggedIn: false,
-                            isLogging: true
-                        };
-                    case ActionType.Logout:
-                        return initialState;
-                    case ActionType.LoggedIn:
-                        return {
-                            isLoggedIn: true,
-                            username: event.payload.username
-                        };
-                    default:
-                        return assertNever(event);
-                }
-            }, initialState)
-        )
+    const state$ = merge(
+        onLogin$.pipe(map(() => Actions.login())),
+        onLogout$.pipe(map(() => Actions.logout())),
+        loginResult$.pipe(map(Actions.loggedIn))
+    ).pipe(
+        scan((_: AuthState, event): AuthState => {
+            switch (event.type) {
+                case ActionType.Login:
+                    return {
+                        isLoggedIn: false,
+                        isLogging: true
+                    };
+                case ActionType.Logout:
+                    return initialState;
+                case ActionType.LoggedIn:
+                    return {
+                        isLoggedIn: true,
+                        username: event.payload.username
+                    };
+                default:
+                    return assertNever(event);
+            }
+        }, initialState),
+        connectAndReplay(dispose$)
     );
-
-    state$.connect();
 
     return {
         state$,

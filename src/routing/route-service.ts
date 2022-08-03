@@ -1,19 +1,16 @@
-import { connectable, Observable, ReplaySubject, Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { Route } from "./types";
+import { connectAndReplay } from "../rxjs/connectAndReplay";
 
 export type RouteService = {
     readonly route$: Observable<Route>;
     readonly navigateTo: (route: Route) => void;
 };
 
-export function createRouterService(): RouteService {
+export function createRouterService(dispose$: Observable<void>): RouteService {
     const onNavigate$ = new Subject<Route>();
 
-    const route$ = connectable(onNavigate$, {
-        connector: () => new ReplaySubject(1)
-    });
-
-    route$.connect();
+    const route$ = onNavigate$.asObservable().pipe(connectAndReplay(dispose$));
 
     return {
         route$,
