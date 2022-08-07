@@ -1,5 +1,5 @@
 import React, { ChangeEventHandler, ReactEventHandler } from "react";
-import { Box, TextField } from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 
 export type ViewProps = {
     readonly username: string;
@@ -35,7 +35,7 @@ export const RegisterFormView: React.FC<ViewProps> = ({
 
     return (
         <form onSubmit={onSubmit}>
-            <Box display="flex" gap={1} flexDirection="column" width="30%" margin="0 auto">
+            <Box display="flex" gap={1} flexDirection="column">
                 {error && (
                     <Box color="red" padding="10px 0">
                         {error}
@@ -57,9 +57,9 @@ export const RegisterFormView: React.FC<ViewProps> = ({
                     margin="dense"
                 />
 
-                <button type="button" onClick={onSubmitCallback}>
+                <Button type="button" variant="contained" onClick={onSubmitCallback}>
                     Register
-                </button>
+                </Button>
             </Box>
         </form>
     );

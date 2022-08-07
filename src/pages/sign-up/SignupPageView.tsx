@@ -1,10 +1,13 @@
 import React from "react";
-import { Layout } from "../../components/Layout/Layout";
+import { GeneralLayout } from "../../components/Layout/GeneralLayout";
 import { RegisterForm } from "./RegisterForm/RegisterForm";
+import { ContentLayout } from "../../components/Layout/ContentLayout";
 
 export const SignupPageView: React.FC = () => (
-    <Layout>
-        <h1>SignUp</h1>
-        <RegisterForm />
-    </Layout>
+    <GeneralLayout>
+        <ContentLayout>
+            <h1>SignUp</h1>
+            <RegisterForm />
+        </ContentLayout>
+    </GeneralLayout>
 );

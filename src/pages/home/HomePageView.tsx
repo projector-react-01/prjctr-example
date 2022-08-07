@@ -1,9 +1,12 @@
 import React from "react";
-import { Layout } from "../../components/Layout/Layout";
+import { GeneralLayout } from "../../components/Layout/GeneralLayout";
+import { ContentLayout } from "../../components/Layout/ContentLayout";
 
 export type ViewProps = {};
 export const HomePageView: React.FC<ViewProps> = () => (
-    <Layout>
-        <h1>HomePage</h1>
-    </Layout>
+    <GeneralLayout>
+        <ContentLayout>
+            <h1>HomePage</h1>
+        </ContentLayout>
+    </GeneralLayout>
 );
