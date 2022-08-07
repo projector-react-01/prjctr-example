@@ -1,6 +1,6 @@
 import { map, Subject, tap, withLatestFrom } from "rxjs";
 import { PropsWithChildren } from "react";
-import { Route } from "../types";
+import { Route, routePathnameMap } from "../types";
 import { ComposeFunction, connect } from "../../connect";
 import { NavigateToView, ViewProps } from "./NavigateToView";
 
@@ -14,6 +14,7 @@ export function createNavigateToStream(
     return props$ => {
         const onClick$ = new Subject<void>();
         const route$ = props$.pipe(map(({ route }) => route));
+        const href$ = route$.pipe(map(route => routePathnameMap[route]));
 
         const navigateToEffect$ = onClick$.pipe(
             withLatestFrom(route$),
@@ -22,7 +23,8 @@ export function createNavigateToStream(
 
         return {
             props: {
-                onClick: () => onClick$.next()
+                onClick: () => onClick$.next(),
+                href: [href$, ""]
             },
             effects: [navigateToEffect$]
         };

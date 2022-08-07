@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, useEffect, useState } from "react";
-import { combineLatest, map, merge, Observable, Subject, tap } from "rxjs";
+import { combineLatest, map, merge, Observable, startWith, Subject, tap } from "rxjs";
 import { AwilixContainer } from "awilix";
 import { useDiContainer } from "./di/DiContext";
 
@@ -62,7 +62,13 @@ export function connect<
                 const isObservableValue = Array.isArray(value) && value[0] instanceof Observable;
 
                 if (isObservableValue) {
-                    return [...vp, value[0].pipe(map(nextStreamValue => [key, nextStreamValue]))];
+                    return [
+                        ...vp,
+                        value[0].pipe(
+                            map(nextStreamValue => [key, nextStreamValue]),
+                            startWith([key, value[1]])
+                        )
+                    ];
                 }
 
                 return vp;
@@ -91,7 +97,7 @@ export function connect<
 
             return () => subscription.unsubscribe();
             // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, []);
+        }, [outStreams$]);
 
         useEffect(() => {
             props$.next(props);

@@ -2,7 +2,7 @@ import { AwilixContainer, asFunction } from "awilix";
 
 import { Observable, Subject } from "rxjs";
 import { createRequestService } from "./api/request-service";
-import { createApiService } from "./api/api-service";
+import { ApiService, createApiService } from "./api/api-service";
 import { createAuthService } from "./auth/auth-service";
 import { createRouterStreams, RouterTypeDef } from "./routing/Router";
 import { createRouterService, RouteService } from "./routing/route-service";
@@ -10,6 +10,11 @@ import { composeHomePageStreams } from "./pages/home/HomePage";
 import { createMapHistoryToRouteEffect } from "./routing/set-route-by-history-effect";
 import { createNavigateToStream, NavigateToTypeDef } from "./routing/NavigatoTo/NavigateTo";
 import { createRouteToHistoryEffect } from "./routing/set-history-by-route-effect";
+import {
+    createRegisterFormStreams,
+    RegisterFormTypeDef
+} from "./pages/sign-up/RegisterForm/RegisterForm";
+import { Route } from "./routing/types";
 
 type DisposeDefinition = {
     readonly dispose$: Observable<void>;
@@ -19,12 +24,33 @@ type RouteDefinition = {
     readonly routeService: RouteService;
 };
 
-type ContainerDefinition = DisposeDefinition & RouteDefinition & RouterTypeDef & NavigateToTypeDef;
+type ApiServiceDefinition = {
+    readonly apiService: ApiService;
+};
+
+type ContainerDefinition = DisposeDefinition &
+    RouteDefinition &
+    RouterTypeDef &
+    NavigateToTypeDef &
+    RegisterFormTypeDef &
+    ApiServiceDefinition;
 
 function registerRegisterModule(container: AwilixContainer<ContainerDefinition>) {
     container.register(
         "NavigateTo",
         asFunction(() => createNavigateToStream(container.resolve("routeService").navigateTo))
+    );
+
+    container.register(
+        "RegisterForm",
+        asFunction(() =>
+            createRegisterFormStreams(
+                {
+                    signUp: container.resolve("apiService").register
+                },
+                () => container.resolve("routeService").navigateTo(Route.Home)
+            )
+        ).singleton()
     );
 }
 

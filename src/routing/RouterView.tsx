@@ -2,6 +2,7 @@ import React from "react";
 import { HomePage } from "../pages/home/HomePage";
 import { Route } from "./types";
 import { assertNever } from "../ts-utils";
+import { SignupPageView } from "../pages/sign-up/SignupPageView";
 
 export type ViewProps = {
     readonly route: Route | undefined;
@@ -11,8 +12,9 @@ function getHomePage(route: Route) {
     switch (route) {
         case Route.Home:
             return <HomePage />;
-        case Route.SignIn:
         case Route.SignUp:
+            return <SignupPageView />;
+        case Route.SignIn:
         case Route.Profile:
             return null;
         default:

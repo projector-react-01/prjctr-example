@@ -15,7 +15,9 @@ export const Header: React.FC = () => (
                     <MenuItem>Profile</MenuItem>
                 </NavigateTo>
 
-                <MenuItem>SignIn/SignUp</MenuItem>
+                <NavigateTo route={Route.SignUp}>
+                    <MenuItem>SignUp</MenuItem>
+                </NavigateTo>
             </MenuList>
         </Container>
     </Paper>
