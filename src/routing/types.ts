@@ -21,3 +21,11 @@ export const pathnameRouteMap: Record<string, Route> = Object.entries(routePathn
     }),
     {}
 );
+
+type PrivateRoute = Route.Profile;
+
+export const privateRoutes = [Route.Profile];
+
+export function isPrivateRoute(route: Route): route is PrivateRoute {
+    return privateRoutes.includes(route);
+}

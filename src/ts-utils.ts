@@ -7,3 +7,5 @@ export function assert(condition: boolean): asserts condition {
         throw new Error("value must be defined");
     }
 }
+
+export type UnionOfArrayTypes<T> = T extends (infer K)[] ? K : never;
