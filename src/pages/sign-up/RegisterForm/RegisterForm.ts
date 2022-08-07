@@ -1,24 +1,10 @@
 import { catchError, filter, map, of, share, Subject, switchMap, tap, withLatestFrom } from "rxjs";
 import { ComposeFunction, connect } from "../../../connect";
 import { RegisterFormView, ViewProps } from "./RegisterFormView";
-
-type SignupResultSuccess = {
-    readonly isSuccess: true;
-};
-
-type SignupResultFailed = {
-    readonly isSuccess: false;
-    readonly error: string;
-};
-
-type SignupResult = SignupResultSuccess | SignupResultFailed;
-
-function isFailedSuccessResult(result: SignupResult): result is SignupResultFailed {
-    return !result.isSuccess;
-}
+import { isFailedOperationResult, Response } from "../../../common/network/response";
 
 type SignUpService = {
-    readonly signUp: (username: string, password: string) => Promise<SignupResult>;
+    readonly signUp: (username: string, password: string) => Promise<Response>;
 };
 
 export function createRegisterFormStreams(
@@ -34,7 +20,7 @@ export function createRegisterFormStreams(
             withLatestFrom(onUserNameChange$, onPasswordChange$),
             switchMap(([, username, password]) => signupService.signUp(username, password)),
             catchError(() =>
-                of<SignupResult>({
+                of<Response>({
                     isSuccess: false,
                     error: "Something went wrong"
                 })
@@ -49,7 +35,7 @@ export function createRegisterFormStreams(
         );
 
         const error$ = onSubmitResult$.pipe(
-            filter(isFailedSuccessResult),
+            filter(isFailedOperationResult),
             map(({ error }) => error)
         );
 

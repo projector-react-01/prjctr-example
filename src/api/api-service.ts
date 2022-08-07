@@ -1,21 +1,13 @@
 import { AxiosError } from "axios";
 import { assert } from "../ts-utils";
-
-type FailedOperationResponse = {
-    readonly isSuccess: false;
-    readonly error: string;
-};
-
-type SuccessOperationResponse = {
-    readonly isSuccess: true;
-};
-
-type Response = FailedOperationResponse | SuccessOperationResponse;
+import { Response } from "../common/network/response";
 
 export type ApiService = {
     readonly register: (username: string, password: string) => Promise<Response>;
-    readonly login: (username: string, password: string) => Promise<void>;
+    readonly login: (username: string, password: string) => Promise<Response>;
     readonly logout: () => Promise<void>;
+
+    readonly fetchAccount: () => Promise<Response<{ readonly username: string }>>;
 };
 
 type RequestService = {
@@ -58,13 +50,50 @@ export function createApiService(requestService: RequestService): ApiService {
             }
         },
         login: async (username, password) => {
-            jwt = await requestService.request("/api/auth/login", "post", {
-                username,
-                password
-            });
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { data } = await requestService.request("/api/auth/login", "post", {
+                    username,
+                    password
+                });
 
-            console.log(jwt);
+                jwt = data;
+
+                console.log(jwt);
+
+                return {
+                    isSuccess: true
+                };
+            } catch (e) {
+                assert(isAxiosError(e));
+
+                return {
+                    isSuccess: false,
+                    error: e.response?.data.detail ?? "Something wend wrong"
+                };
+            }
         },
+
+        fetchAccount: async () => {
+            try {
+                const { data } = await requestService.request("/me", "get");
+
+                return {
+                    isSuccess: true,
+                    response: {
+                        username: data.user
+                    }
+                };
+            } catch (e) {
+                assert(isAxiosError(e));
+
+                return {
+                    isSuccess: false,
+                    error: e.response?.data.detail ?? "Something wend wrong"
+                };
+            }
+        },
+
         logout: () => requestService.request("/logout", "post")
     };
 }

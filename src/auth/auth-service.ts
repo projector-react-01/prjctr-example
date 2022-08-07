@@ -1,6 +1,7 @@
-import { map, merge, Observable, scan, Subject, switchMap } from "rxjs";
+import { filter, map, merge, Observable, scan, Subject, switchMap } from "rxjs";
 import { assertNever } from "../ts-utils";
 import { connectAndReplay } from "../rxjs/connectAndReplay";
+import { isSuccessOperationResult, Response } from "../common/network/response";
 
 export type AuthState =
     | {
@@ -14,20 +15,20 @@ export type AuthState =
 
 export type AuthService = {
     readonly state$: Observable<AuthState>;
-    readonly login: (username: string, password: string) => void;
+    readonly fetchAccount: () => void;
     readonly logout: () => void;
 };
 
 const enum ActionType {
-    Login = "Login",
+    Loading = "Loading",
     Logout = "Logout",
-    LoggedIn = "LoggedIn"
+    AccountWasFetched = "AccountWasFetched"
 }
 
 const Actions = {
-    loggedIn: (username: string) =>
+    accountWasFetched: ({ username }: { readonly username: string }) =>
         ({
-            type: ActionType.LoggedIn,
+            type: ActionType.AccountWasFetched,
             payload: { username }
         } as const),
 
@@ -36,9 +37,9 @@ const Actions = {
             type: ActionType.Logout
         } as const),
 
-    login: () =>
+    fetchAccount: () =>
         ({
-            type: ActionType.Login
+            type: ActionType.Loading
         } as const)
 };
 
@@ -48,35 +49,35 @@ const initialState: AuthState = {
 };
 
 type ApiService = {
-    readonly login: (username: string, password: string) => Promise<void>;
+    readonly fetchAccount: () => Promise<Response<{ readonly username: string }>>;
     readonly logout: () => Promise<void>;
 };
 
 export function createAuthService(apiService: ApiService, dispose$: Observable<void>): AuthService {
-    const onLogin$ = new Subject<readonly [username: string, password: string]>();
+    const onFetchAccount = new Subject<void>();
     const onLogout$ = new Subject<void>();
 
-    const loginResult$ = onLogin$.pipe(
-        switchMap(([username, password]) =>
-            apiService.login(username, password).then(() => username)
-        )
+    const loginResult$ = onFetchAccount.pipe(
+        switchMap(() => apiService.fetchAccount()),
+        filter(isSuccessOperationResult),
+        map(({ response }) => response)
     );
 
     const state$ = merge(
-        onLogin$.pipe(map(() => Actions.login())),
+        onFetchAccount.pipe(map(() => Actions.fetchAccount())),
         onLogout$.pipe(map(() => Actions.logout())),
-        loginResult$.pipe(map(Actions.loggedIn))
+        loginResult$.pipe(map(Actions.accountWasFetched))
     ).pipe(
         scan((_: AuthState, event): AuthState => {
             switch (event.type) {
-                case ActionType.Login:
+                case ActionType.Loading:
                     return {
                         isLoggedIn: false,
                         isLogging: true
                     };
                 case ActionType.Logout:
                     return initialState;
-                case ActionType.LoggedIn:
+                case ActionType.AccountWasFetched:
                     return {
                         isLoggedIn: true,
                         username: event.payload.username
@@ -90,7 +91,7 @@ export function createAuthService(apiService: ApiService, dispose$: Observable<v
 
     return {
         state$,
-        login: (username, password) => onLogin$.next([username, password]),
+        fetchAccount: () => onFetchAccount.next(),
         logout: () => onLogout$.next()
     };
 }
