@@ -25,7 +25,6 @@ export function createSetRouteEffect(
         handler();
 
         return new Observable<void>(() => {
-            console.log("start effect");
             window.addEventListener("popstate", handler);
 
             return () => window.removeEventListener("popstate", handler);

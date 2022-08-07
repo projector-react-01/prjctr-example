@@ -12,4 +12,8 @@ export function createRouterStreams(route$: Observable<Route>): ComposeFunction<
     });
 }
 
-export const Router = connect(RouterView, "Router");
+export type RouterTypeDef = {
+    Router: ComposeFunction<{}, ViewProps>;
+};
+
+export const Router = connect<{}, ViewProps, RouterTypeDef>(RouterView, "Router");

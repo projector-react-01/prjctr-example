@@ -8,7 +8,7 @@ export const MountEffects: React.FC = () => {
     const [effects] = useState(() => container.resolve("Effects") as readonly Effect[]);
 
     useEffect(() => {
-        const subscription = merge(effects.map(({ effect }) => effect())).subscribe();
+        const subscription = merge(...effects.map(({ effect }) => effect())).subscribe();
 
         return () => subscription.unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
