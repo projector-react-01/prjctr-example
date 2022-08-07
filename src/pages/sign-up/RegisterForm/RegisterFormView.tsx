@@ -50,6 +50,7 @@ export const RegisterFormView: React.FC<ViewProps> = ({
                 />
 
                 <TextField
+                    type="password"
                     required={true}
                     value={password}
                     label="Password"

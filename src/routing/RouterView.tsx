@@ -3,6 +3,7 @@ import { HomePage } from "../pages/home/HomePage";
 import { Route } from "./types";
 import { assertNever } from "../ts-utils";
 import { SignupPageView } from "../pages/sign-up/SignupPageView";
+import { SignUpSuccessPageView } from "../pages/sign-up/SignUpSuccessPageView";
 
 export type ViewProps = {
     readonly route: Route | undefined;
@@ -14,6 +15,8 @@ function getHomePage(route: Route) {
             return <HomePage />;
         case Route.SignUp:
             return <SignupPageView />;
+        case Route.SignUpSuccess:
+            return <SignUpSuccessPageView />;
         case Route.SignIn:
         case Route.Profile:
             return null;

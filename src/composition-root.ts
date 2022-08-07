@@ -48,7 +48,7 @@ function registerRegisterModule(container: AwilixContainer<ContainerDefinition>)
                 {
                     signUp: container.resolve("apiService").register
                 },
-                () => container.resolve("routeService").navigateTo(Route.Home)
+                () => container.resolve("routeService").navigateTo(Route.SignUpSuccess)
             )
         ).singleton()
     );
