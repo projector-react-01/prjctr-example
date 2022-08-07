@@ -1,17 +1,12 @@
 import { Observable, takeUntil } from "rxjs";
-import { createEffect } from "./types";
-import { Route } from "../routing/types";
+import { createEffect } from "../effects/types";
+import { pathnameRouteMap, Route } from "./types";
 
 function locationToRoute(location: string): Route {
-    switch (true) {
-        case location === "/":
-            return Route.Home;
-        default:
-            return Route.Home;
-    }
+    return pathnameRouteMap[location] ?? Route.Home;
 }
 
-export function createSetRouteEffect(
+export function createMapHistoryToRouteEffect(
     navigateTo: (route: Route) => void,
     dispose$: Observable<void>
 ) {

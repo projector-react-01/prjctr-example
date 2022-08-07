@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { combineLatest, map, Observable, Subject } from "rxjs";
+import React, { PropsWithChildren, useEffect, useState } from "react";
+import { combineLatest, map, merge, Observable, Subject, tap } from "rxjs";
 import { AwilixContainer } from "awilix";
 import { useDiContainer } from "./di/DiContext";
 
@@ -17,7 +17,7 @@ export type ComposeFunction<P extends {}, VP extends {}> = (
 ) => ComposeFunctionOutput<VP>;
 
 export function connect<
-    P extends {},
+    P extends Partial<PropsWithChildren<{}>>,
     VP extends {},
     TypeDef extends Record<string, ComposeFunction<P, VP>>,
     K extends keyof TypeDef = keyof TypeDef
@@ -55,7 +55,7 @@ export function connect<
             }, {} as Partial<VP>) as VP;
         });
 
-        useEffect(() => {
+        const [outStreams$] = useState(() => {
             const keys = Object.keys(out.props) as (keyof VP)[];
             const outStreams: readonly Observable<[string, unknown]>[] = keys.reduce((vp, key) => {
                 const value = out.props[key];
@@ -68,7 +68,7 @@ export function connect<
                 return vp;
             }, [] as readonly Observable<[string, unknown]>[]);
 
-            const outStream$ = combineLatest(outStreams).pipe(
+            return combineLatest(outStreams).pipe(
                 map(values =>
                     values.reduce(
                         (vp, [key, value]) => ({
@@ -77,18 +77,19 @@ export function connect<
                         }),
                         {} as Partial<VP>
                     )
-                )
-            );
-
-            const subscription = outStream$.subscribe({
-                next: partialProps => {
+                ),
+                tap(partialProps => {
                     setViewProps({ ...viewProps, ...partialProps });
-                }
-            });
+                })
+            );
+        });
 
-            return () => {
-                subscription.unsubscribe();
-            };
+        useEffect(() => {
+            const effectsStreams$ = merge(...Object.values(out.effects));
+
+            const subscription = merge(effectsStreams$, outStreams$).subscribe();
+
+            return () => subscription.unsubscribe();
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
@@ -97,13 +98,6 @@ export function connect<
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [...Object.values(props)]);
 
-        useEffect(() => {
-            const subscription = combineLatest(out.effects).subscribe();
-
-            return () => subscription.unsubscribe();
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, []);
-
-        return view(viewProps);
+        return view({ ...viewProps, children: props.children });
     };
 }

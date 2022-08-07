@@ -7,7 +7,9 @@ import { createAuthService } from "./auth/auth-service";
 import { createRouterStreams, RouterTypeDef } from "./routing/Router";
 import { createRouterService, RouteService } from "./routing/route-service";
 import { composeHomePageStreams } from "./pages/home/HomePage";
-import { createSetRouteEffect } from "./effects/set-route-effect";
+import { createMapHistoryToRouteEffect } from "./routing/set-route-by-history-effect";
+import { createNavigateToStream, NavigateToTypeDef } from "./routing/NavigatoTo/NavigateTo";
+import { createRouteToHistoryEffect } from "./routing/set-history-by-route-effect";
 
 type DisposeDefinition = {
     readonly dispose$: Observable<void>;
@@ -17,13 +19,30 @@ type RouteDefinition = {
     readonly routeService: RouteService;
 };
 
-type ContainerDefinition = DisposeDefinition & RouteDefinition & RouterTypeDef;
+type ContainerDefinition = DisposeDefinition & RouteDefinition & RouterTypeDef & NavigateToTypeDef;
 
-function registerEffects(container: AwilixContainer) {
+function registerRegisterModule(container: AwilixContainer<ContainerDefinition>) {
+    container.register(
+        "NavigateTo",
+        asFunction(() => createNavigateToStream(container.resolve("routeService").navigateTo))
+    );
+}
+
+function registerEffects(container: AwilixContainer<ContainerDefinition>) {
     container.register(
         "setRouteEffect",
         asFunction(({ routeService, dispose$ }) =>
-            createSetRouteEffect(routeService.navigateTo, dispose$)
+            createMapHistoryToRouteEffect(routeService.navigateTo, dispose$)
+        ).singleton()
+    );
+
+    container.register(
+        "setHistoryEffect",
+        asFunction(() =>
+            createRouteToHistoryEffect(
+                container.resolve("routeService").route$,
+                container.resolve("dispose$")
+            )
         ).singleton()
     );
 }
@@ -65,5 +84,13 @@ export function registerDependencies(container: AwilixContainer<ContainerDefinit
 
     registerEffects(container);
 
-    container.register("Effects", asFunction(deps => [deps.setRouteEffect]).singleton());
+    container.register(
+        "Effects",
+        asFunction(() => [
+            container.resolve("setRouteEffect"),
+            container.resolve("setHistoryEffect")
+        ]).singleton()
+    );
+
+    registerRegisterModule(container);
 }

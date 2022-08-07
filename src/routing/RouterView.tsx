@@ -11,7 +11,8 @@ function getHomePage(route: Route) {
     switch (route) {
         case Route.Home:
             return <HomePage />;
-        case Route.Video:
+        case Route.SignIn:
+        case Route.SignUp:
         case Route.Profile:
             return null;
         default:
