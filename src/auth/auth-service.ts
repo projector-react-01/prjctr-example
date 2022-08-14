@@ -1,21 +1,32 @@
-import { filter, map, merge, Observable, scan, Subject, switchMap } from "rxjs";
+import { filter, map, merge, Observable, scan, startWith, Subject, switchMap } from "rxjs";
 import { assertNever } from "../ts-utils";
 import { connectAndReplay } from "../rxjs/connectAndReplay";
 import { isSuccessOperationResult, Response } from "../common/network/response";
 
-export type AuthState =
-    | {
-          readonly isLoggedIn: true;
-          readonly username: string;
-      }
-    | {
-          readonly isLoggedIn: false;
-          readonly isLogging: boolean;
-      };
+type UnLoggedInState = {
+    readonly isLoggedIn: false;
+    readonly isLogging: boolean;
+};
+
+type LoggedInSate = {
+    readonly isLoggedIn: true;
+    readonly username: string;
+};
+
+export type AuthState = UnLoggedInState | LoggedInSate;
+
+function isLoggedInState(state: AuthState): state is LoggedInSate {
+    return state.isLoggedIn;
+}
+
+type AccountInfo = {
+    readonly username: string;
+};
 
 export type AuthService = {
     readonly state$: Observable<AuthState>;
     readonly isLoggedIn$: Observable<boolean>;
+    readonly accountInfo$: Observable<AccountInfo | undefined>;
     readonly fetchAccount: () => void;
     readonly logout: () => void;
 };
@@ -87,12 +98,21 @@ export function createAuthService(apiService: ApiService, dispose$: Observable<v
                     return assertNever(event);
             }
         }, initialState),
+        startWith(initialState),
         connectAndReplay(dispose$)
     );
 
+    const accountInfo$: Observable<AccountInfo> = state$.pipe(
+        filter(isLoggedInState),
+        map(({ username }) => ({ username }))
+    );
+
+    const isLoggedIn$ = state$.pipe(map(({ isLoggedIn }) => isLoggedIn));
+
     return {
         state$,
-        isLoggedIn$: state$.pipe(map(({ isLoggedIn }) => isLoggedIn)),
+        accountInfo$,
+        isLoggedIn$,
         fetchAccount: () => onFetchAccount.next(),
         logout: () => onLogout$.next()
     };

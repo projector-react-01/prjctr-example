@@ -18,6 +18,7 @@ import { Route } from "./routing/types";
 import { createLoginFormStreams, LoginFormTypeDef } from "./pages/sign-in/LoginForm/LoginForm";
 import { composeHeaderStreams, HeaderTypeDef } from "./components/Layout/Header/Header";
 import { composeLogoutItem } from "./components/Layout/Header/LogoutItem/LogoutItem";
+import { composeProfileStreams } from "./pages/profile/ProfilePage";
 
 type DisposeDefinition = {
     readonly dispose$: Observable<void>;
@@ -69,6 +70,13 @@ function registerLayoutModule(container: AwilixContainer<ContainerDefinition>) {
 
 function registerAuthModule(container: AwilixContainer<ContainerDefinition>) {
     container.register(
+        "authService",
+        asFunction(({ apiService, dispose$ }) =>
+            createAuthService(apiService, dispose$)
+        ).singleton()
+    );
+
+    container.register(
         "RegisterForm",
         asFunction(() =>
             createRegisterFormStreams(
@@ -97,7 +105,12 @@ function registerAuthModule(container: AwilixContainer<ContainerDefinition>) {
 function registerRouterModule(container: AwilixContainer<ContainerDefinition>) {
     container.register(
         "routeService",
-        asFunction(() => createRouterService(container.resolve("dispose$"))).singleton()
+        asFunction(() =>
+            createRouterService(
+                container.resolve("authService").isLoggedIn$,
+                container.resolve("dispose$")
+            )
+        ).singleton()
     );
 
     container.register(
@@ -159,14 +172,14 @@ export function registerDependencies(container: AwilixContainer<ContainerDefinit
         "apiService",
         asFunction(({ requestService }) => createApiService(requestService)).singleton()
     );
-    container.register(
-        "authService",
-        asFunction(({ apiService, dispose$ }) =>
-            createAuthService(apiService, dispose$)
-        ).singleton()
-    );
 
     container.register("HomePage", asFunction(() => composeHomePageStreams()).singleton());
+    container.register(
+        "ProfilePageStreamComposer",
+        asFunction(() =>
+            composeProfileStreams(container.resolve("authService").accountInfo$)
+        ).singleton()
+    );
 
     registerRouterModule(container);
     registerEffects(container);

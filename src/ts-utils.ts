@@ -8,4 +8,10 @@ export function assert(condition: boolean): asserts condition {
     }
 }
 
-export type UnionOfArrayTypes<T> = T extends (infer K)[] ? K : never;
+export function isUndefined<T>(value: T | undefined): value is undefined {
+    return value === undefined;
+}
+
+export function isNotUndefined<T>(value: T | undefined): value is T {
+    return value !== undefined;
+}

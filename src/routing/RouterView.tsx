@@ -5,6 +5,7 @@ import { assertNever } from "../ts-utils";
 import { SignUpPageView } from "../pages/sign-up/SignUpPageView";
 import { SignUpSuccessPageView } from "../pages/sign-up/SignUpSuccessPageView";
 import { SignInPageView } from "../pages/sign-in/SignInPageView";
+import { ProfilePage } from "../pages/profile/ProfilePage";
 
 export type ViewProps = {
     readonly route: Route | undefined;
@@ -21,7 +22,7 @@ function getHomePage(route: Route) {
         case Route.SignIn:
             return <SignInPageView />;
         case Route.Profile:
-            return null;
+            return <ProfilePage />;
         default:
             return assertNever(route);
     }

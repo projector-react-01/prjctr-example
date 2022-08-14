@@ -1,4 +1,4 @@
-import { map, Observable, Subject } from "rxjs";
+import { map, Observable, Subject, withLatestFrom } from "rxjs";
 import { isPrivateRoute, Route } from "./types";
 import { connectAndReplay } from "../rxjs/connectAndReplay";
 
@@ -7,11 +7,15 @@ export type RouteService = {
     readonly navigateTo: (route: Route) => void;
 };
 
-export function createRouterService(dispose$: Observable<void>): RouteService {
+export function createRouterService(
+    isLoggedIn$: Observable<boolean>,
+    dispose$: Observable<void>
+): RouteService {
     const onNavigate$ = new Subject<Route>();
 
     const route$ = onNavigate$.pipe(
-        map(route => (isPrivateRoute(route) ? Route.SignIn : route)),
+        withLatestFrom(isLoggedIn$),
+        map(([route, isLoggedIn]) => (isPrivateRoute(route) && !isLoggedIn ? Route.SignIn : route)),
         connectAndReplay(dispose$)
     );
 
