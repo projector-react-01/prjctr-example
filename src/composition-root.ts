@@ -1,4 +1,4 @@
-import { AwilixContainer, asFunction } from "awilix";
+import { asFunction, AwilixContainer } from "awilix";
 
 import { Observable, Subject } from "rxjs";
 import { createRequestService } from "./api/request-service";
@@ -16,6 +16,8 @@ import {
 } from "./pages/sign-up/RegisterForm/RegisterForm";
 import { Route } from "./routing/types";
 import { createLoginFormStreams, LoginFormTypeDef } from "./pages/sign-in/LoginForm/LoginForm";
+import { composeHeaderStreams, HeaderTypeDef } from "./components/Layout/Header/Header";
+import { composeLogoutItem } from "./components/Layout/Header/LogoutItem/LogoutItem";
 
 type DisposeDefinition = {
     readonly dispose$: Observable<void>;
@@ -33,14 +35,37 @@ type AuthServiceDefinition = {
     readonly authService: AuthService;
 };
 
+type NavigateToDefinition = {
+    readonly navigateToHome: () => void;
+};
+
 type ContainerDefinition = DisposeDefinition &
     RouteDefinition &
     RouterTypeDef &
+    NavigateToDefinition &
     NavigateToTypeDef &
     RegisterFormTypeDef &
     ApiServiceDefinition &
     LoginFormTypeDef &
-    AuthServiceDefinition;
+    AuthServiceDefinition &
+    HeaderTypeDef;
+
+function registerLayoutModule(container: AwilixContainer<ContainerDefinition>) {
+    container.register(
+        "Header",
+        asFunction(() => composeHeaderStreams(container.resolve("authService")))
+    );
+
+    container.register(
+        "LogoutItem",
+        asFunction(() =>
+            composeLogoutItem(
+                container.resolve("authService").logout,
+                container.resolve("navigateToHome")
+            )
+        )
+    );
+}
 
 function registerAuthModule(container: AwilixContainer<ContainerDefinition>) {
     container.register(
@@ -66,6 +91,28 @@ function registerAuthModule(container: AwilixContainer<ContainerDefinition>) {
                 () => container.resolve("routeService").navigateTo(Route.Home)
             )
         ).singleton()
+    );
+}
+
+function registerRouterModule(container: AwilixContainer<ContainerDefinition>) {
+    container.register(
+        "routeService",
+        asFunction(() => createRouterService(container.resolve("dispose$"))).singleton()
+    );
+
+    container.register(
+        "Router",
+        asFunction(() => createRouterStreams(container.resolve("routeService").route$)).singleton()
+    );
+
+    container.register(
+        "NavigateTo",
+        asFunction(() => createNavigateToStream(container.resolve("routeService").navigateTo))
+    );
+
+    container.register(
+        "navigateToHome",
+        asFunction(() => () => container.resolve("routeService").navigateTo(Route.Home))
     );
 }
 
@@ -119,23 +166,10 @@ export function registerDependencies(container: AwilixContainer<ContainerDefinit
         ).singleton()
     );
 
-    container.register(
-        "routeService",
-        asFunction(() => createRouterService(container.resolve("dispose$"))).singleton()
-    );
-
-    container.register(
-        "Router",
-        asFunction(() => createRouterStreams(container.resolve("routeService").route$)).singleton()
-    );
-
-    container.register(
-        "NavigateTo",
-        asFunction(() => createNavigateToStream(container.resolve("routeService").navigateTo))
-    );
-
     container.register("HomePage", asFunction(() => composeHomePageStreams()).singleton());
 
+    registerRouterModule(container);
     registerEffects(container);
     registerAuthModule(container);
+    registerLayoutModule(container);
 }

@@ -15,6 +15,7 @@ export type AuthState =
 
 export type AuthService = {
     readonly state$: Observable<AuthState>;
+    readonly isLoggedIn$: Observable<boolean>;
     readonly fetchAccount: () => void;
     readonly logout: () => void;
 };
@@ -91,6 +92,7 @@ export function createAuthService(apiService: ApiService, dispose$: Observable<v
 
     return {
         state$,
+        isLoggedIn$: state$.pipe(map(({ isLoggedIn }) => isLoggedIn)),
         fetchAccount: () => onFetchAccount.next(),
         logout: () => onLogout$.next()
     };

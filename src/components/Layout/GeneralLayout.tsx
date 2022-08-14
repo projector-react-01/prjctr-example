@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { Grid } from "@mui/material";
-import { Header } from "./Header";
+import { Header } from "./Header/Header";
 
 export const GeneralLayout: React.FC<PropsWithChildren<{}>> = ({ children }) => (
     <Grid container spacing={2}>
